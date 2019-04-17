@@ -34,6 +34,7 @@ func (c *PlaceController) URLMapping() {
 func (c *PlaceController) Post() {
 	var v models.Place
 	if err := json.Unmarshal(c.Ctx.Input.RequestBody, &v); err != nil {
+		c.Data["json"] = err.Error()
 		c.Abort("400")
 	}
 
@@ -42,6 +43,7 @@ func (c *PlaceController) Post() {
 		c.Data["json"] = v
 	} else {
 		c.Data["json"] = err.Error()
+		c.Abort("500")
 	}
 	c.ServeJSON()
 }
@@ -63,9 +65,9 @@ func (c *PlaceController) GetOne() {
 	v, err := models.GetPlaceById(id)
 	if err != nil {
 		c.Data["json"] = err.Error()
+		c.Abort("500")
 	} else {
 		c.Data["json"] = v
-		c.Abort("500")
 	}
 	c.ServeJSON()
 }
@@ -178,8 +180,8 @@ func (c *PlaceController) Delete() {
 //Match
 // @Title Match
 // @Description 匹配最近的地址信息
-// @Param longitude formData float true "经度"
-// @Param latitude formData float true "纬度"
+// @Param longitude formData number true "经度"
+// @Param latitude formData number true "纬度"
 // @Success 200 {object} models.Place
 // @Failure 400 {string} 输入错误！
 // @router /match [post]

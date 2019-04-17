@@ -153,6 +153,8 @@ func MatchPlace(longitude, latitude float64) (v Place, err error) {
 		p        []Place
 		min, dis float64 = 99999999, 0
 	)
+	fmt.Println(longitude)
+	fmt.Println(latitude)
 	o := orm.NewOrm()
 	_, err = o.QueryTable("place").All(&p)
 	if err != nil {

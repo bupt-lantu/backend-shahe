@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"github.com/astaxie/beego"
 )
 
@@ -18,5 +19,6 @@ func (c *ErrorController) Error400() {
 }
 
 func (c *ErrorController) Error500() {
+	fmt.Println(c.Data["json"])
 	c.ServeJSON()
 }

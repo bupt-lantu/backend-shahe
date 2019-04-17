@@ -1,0 +1,23 @@
+version: "3"
+services:
+  db:
+    image: postgres:11.2-alpine
+    expose:
+      - "5432"
+    environment:
+      - TIMEZONE=Asis/Shanghai
+      - POSTGRES_PASSWORD=123456
+      - POSTGRES_DB=tour
+      - LANG=C.UTF-8
+
+  service:
+    image: wzekin/bupt_tour
+    depends_on:
+      - db
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./storage:/App/storage
+    environment:
+      - LANG=C.UTF-8
+

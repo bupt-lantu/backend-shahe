@@ -27,13 +27,16 @@ func (c *PlaceController) URLMapping() {
 // Post ...
 // @Title Post
 // @Description create Place
-// @Param	body		body 	models.Place	true		"body for Place content"
+// @Param	body		body	models.Place	true		"body for Place content"
 // @Success 201 {int} models.Place
 // @Failure 403 body is empty
 // @router / [post]
 func (c *PlaceController) Post() {
 	var v models.Place
-	json.Unmarshal(c.Ctx.Input.RequestBody, &v)
+	if err := json.Unmarshal(c.Ctx.Input.RequestBody, &v); err != nil {
+		c.Abort("400")
+	}
+
 	if _, err := models.AddPlace(&v); err == nil {
 		c.Ctx.Output.SetStatus(201)
 		c.Data["json"] = v
@@ -46,18 +49,23 @@ func (c *PlaceController) Post() {
 // GetOne ...
 // @Title Get One
 // @Description get Place by id
-// @Param	id		path 	string	true		"The key for staticblock"
+// @Param	id		path	string	true		"The key for staticblock"
 // @Success 200 {object} models.Place
 // @Failure 403 :id is empty
 // @router /:id [get]
 func (c *PlaceController) GetOne() {
 	idStr := c.Ctx.Input.Param(":id")
-	id, _ := strconv.ParseInt(idStr, 0, 64)
+	id, err := strconv.ParseInt(idStr, 0, 64)
+	if err != nil {
+		c.Data["json"] = err.Error()
+		c.Abort("400")
+	}
 	v, err := models.GetPlaceById(id)
 	if err != nil {
 		c.Data["json"] = err.Error()
 	} else {
 		c.Data["json"] = v
+		c.Abort("500")
 	}
 	c.ServeJSON()
 }
@@ -119,6 +127,7 @@ func (c *PlaceController) GetAll() {
 	l, err := models.GetAllPlace(query, fields, sortby, order, offset, limit)
 	if err != nil {
 		c.Data["json"] = err.Error()
+		c.Abort("500")
 	} else {
 		c.Data["json"] = l
 	}
@@ -128,8 +137,8 @@ func (c *PlaceController) GetAll() {
 // Put ...
 // @Title Put
 // @Description update the Place
-// @Param	id		path 	string	true		"The id you want to update"
-// @Param	body		body 	models.Place	true		"body for Place content"
+// @Param	id		path	string	true		"The id you want to update"
+// @Param	body		body	models.Place	true		"body for Place content"
 // @Success 200 {object} models.Place
 // @Failure 403 :id is not int
 // @router /:id [put]
@@ -142,6 +151,7 @@ func (c *PlaceController) Put() {
 		c.Data["json"] = "OK"
 	} else {
 		c.Data["json"] = err.Error()
+		c.Abort("500")
 	}
 	c.ServeJSON()
 }
@@ -149,7 +159,7 @@ func (c *PlaceController) Put() {
 // Delete ...
 // @Title Delete
 // @Description delete the Place
-// @Param	id		path 	string	true		"The id you want to delete"
+// @Param	id		path	string	true		"The id you want to delete"
 // @Success 200 {string} delete success!
 // @Failure 403 id is empty
 // @router /:id [delete]
@@ -160,6 +170,37 @@ func (c *PlaceController) Delete() {
 		c.Data["json"] = "OK"
 	} else {
 		c.Data["json"] = err.Error()
+		c.Abort("500")
+	}
+	c.ServeJSON()
+}
+
+//Match
+// @Title Match
+// @Description 匹配最近的地址信息
+// @Param longitude formData float true "经度"
+// @Param latitude formData float true "纬度"
+// @Success 200 {object} models.Place
+// @Failure 400 {string} 输入错误！
+// @router /match [post]
+func (c *PlaceController) Match() {
+	longitude, err := c.GetFloat("longitude")
+	if err != nil {
+		c.Data["json"] = err.Error()
+		c.Abort("400")
+		return
+	}
+	latitude, err := c.GetFloat("latitude")
+	if err != nil {
+		c.Data["json"] = err.Error()
+		c.Abort("400")
+		return
+	}
+	if v, err := models.MatchPlace(longitude, latitude); err == nil {
+		c.Data["json"] = v
+	} else {
+		c.Data["json"] = err.Error()
+		c.Abort("500")
 	}
 	c.ServeJSON()
 }

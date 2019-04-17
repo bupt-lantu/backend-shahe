@@ -3,6 +3,7 @@ package models
 import (
 	"errors"
 	"fmt"
+	"math"
 	"reflect"
 	"strings"
 
@@ -12,6 +13,7 @@ import (
 type Place struct {
 	Id        int64
 	Title     string `orm:"size(128)"`
+	Desc      string `orm:"size(255)"`
 	Picture   string `orm:"size(128)"`
 	Video     string `orm:"size(128)"`
 	Longitude float64
@@ -25,6 +27,7 @@ func init() {
 // AddPlace insert a new Place into database and returns
 // last inserted Id on success.
 func AddPlace(m *Place) (id int64, err error) {
+	fmt.Println(m)
 	o := orm.NewOrm()
 	id, err = o.Insert(m)
 	return
@@ -140,6 +143,26 @@ func DeletePlace(id int64) (err error) {
 		var num int64
 		if num, err = o.Delete(&Place{Id: id}); err == nil {
 			fmt.Println("Number of records deleted in database:", num)
+		}
+	}
+	return
+}
+
+func MatchPlace(longitude, latitude float64) (v Place, err error) {
+	var (
+		p        []Place
+		min, dis float64 = 99999999, 0
+	)
+	o := orm.NewOrm()
+	_, err = o.QueryTable("place").All(&p)
+	if err != nil {
+		return
+	}
+	for _, i := range p {
+		dis = math.Abs(longitude-i.Longitude) + math.Abs(latitude-i.Latitude)
+		if min > dis {
+			min = dis
+			v = i
 		}
 	}
 	return

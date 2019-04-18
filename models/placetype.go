@@ -3,54 +3,49 @@ package models
 import (
 	"errors"
 	"fmt"
-	"math"
 	"reflect"
 	"strings"
 
 	"github.com/astaxie/beego/orm"
 )
 
-type Place struct {
-	Id        int64
-	Title     string     `orm:"size(128)" valid:"Required"`
-	Desc      string     `orm:"size(255)" valid:"Required"`
-	Picture   string     `orm:"size(256)" valid:"Required"`
-	Video     string     `orm:"size(256)" valid:"Required"`
-	Longitude float64    `valid:"Required"`
-	Latitude  float64    `valid:"Required"`
-	PlaceType *PlaceType `orm:"rel(fk);null" valid:"Required"`
+type PlaceType struct {
+	Id     int64    `orm:"auto"`
+	Type   string   `orm:"size(128)" valid:"Required"`
+	Places []*Place `orm:"reverse(many)" json:",omitempty"`
 }
 
 func init() {
-	orm.RegisterModel(new(Place))
+	orm.RegisterModel(new(PlaceType))
 }
 
-// AddPlace insert a new Place into database and returns
+// AddPlaceType insert a new PlaceType into database and returns
 // last inserted Id on success.
-func AddPlace(m *Place) (id int64, err error) {
-	fmt.Println(m)
+func AddPlaceType(m *PlaceType) (id int64, err error) {
 	o := orm.NewOrm()
 	id, err = o.Insert(m)
 	return
 }
 
-// GetPlaceById retrieves Place by Id. Returns error if
+// GetPlaceTypeById retrieves PlaceType by Id. Returns error if
 // Id doesn't exist
-func GetPlaceById(id int64) (v *Place, err error) {
+func GetPlaceTypeById(id int64) (v *PlaceType, err error) {
 	o := orm.NewOrm()
-	v = &Place{Id: id}
-	if err = o.QueryTable(new(Place)).Filter("Id", id).RelatedSel().One(v); err == nil {
-		return v, nil
+	v = &PlaceType{Id: id}
+	if err = o.QueryTable(new(PlaceType)).Filter("Id", id).RelatedSel().One(v); err == nil {
+		if _, err := o.QueryTable("place").Filter("PlaceType__Id", v.Id).All(&v.Places); err == nil {
+			return v, nil
+		}
 	}
 	return nil, err
 }
 
-// GetAllPlace retrieves all Place matches certain condition. Returns empty list if
+// GetAllPlaceType retrieves all PlaceType matches certain condition. Returns empty list if
 // no records exist
-func GetAllPlace(query map[string]string, fields []string, sortby []string, order []string,
+func GetAllPlaceType(query map[string]string, fields []string, sortby []string, order []string,
 	offset int64, limit int64) (ml []interface{}, err error) {
 	o := orm.NewOrm()
-	qs := o.QueryTable(new(Place))
+	qs := o.QueryTable(new(PlaceType))
 	// query k=v
 	for k, v := range query {
 		// rewrite dot-notation to Object__Attribute
@@ -96,11 +91,14 @@ func GetAllPlace(query map[string]string, fields []string, sortby []string, orde
 		}
 	}
 
-	var l []Place
+	var l []PlaceType
 	qs = qs.OrderBy(sortFields...).RelatedSel()
 	if _, err = qs.Limit(limit, offset).All(&l, fields...); err == nil {
 		if len(fields) == 0 {
 			for _, v := range l {
+				if _, err := o.QueryTable("place").Filter("PlaceType__Id", v.Id).All(&v.Places); err != nil {
+					return nil, err
+				}
 				ml = append(ml, v)
 			}
 		} else {
@@ -109,7 +107,13 @@ func GetAllPlace(query map[string]string, fields []string, sortby []string, orde
 				m := make(map[string]interface{})
 				val := reflect.ValueOf(v)
 				for _, fname := range fields {
-					m[fname] = val.FieldByName(fname).Interface()
+					if fname == "Places" {
+						if _, err := o.QueryTable("place").Filter("PlaceType__Id", v.Id).All(&v.Places); err != nil {
+							return nil, err
+						}
+					} else {
+						m[fname] = val.FieldByName(fname).Interface()
+					}
 				}
 				ml = append(ml, m)
 			}
@@ -119,11 +123,11 @@ func GetAllPlace(query map[string]string, fields []string, sortby []string, orde
 	return nil, err
 }
 
-// UpdatePlace updates Place by Id and returns error if
+// UpdatePlaceType updates PlaceType by Id and returns error if
 // the record to be updated doesn't exist
-func UpdatePlaceById(m *Place) (err error) {
+func UpdatePlaceTypeById(m *PlaceType) (err error) {
 	o := orm.NewOrm()
-	v := Place{Id: m.Id}
+	v := PlaceType{Id: m.Id}
 	// ascertain id exists in the database
 	if err = o.Read(&v); err == nil {
 		var num int64
@@ -134,38 +138,16 @@ func UpdatePlaceById(m *Place) (err error) {
 	return
 }
 
-// DeletePlace deletes Place by Id and returns error if
+// DeletePlaceType deletes PlaceType by Id and returns error if
 // the record to be deleted doesn't exist
-func DeletePlace(id int64) (err error) {
+func DeletePlaceType(id int64) (err error) {
 	o := orm.NewOrm()
-	v := Place{Id: id}
+	v := PlaceType{Id: id}
 	// ascertain id exists in the database
 	if err = o.Read(&v); err == nil {
 		var num int64
-		if num, err = o.Delete(&Place{Id: id}); err == nil {
+		if num, err = o.Delete(&PlaceType{Id: id}); err == nil {
 			fmt.Println("Number of records deleted in database:", num)
-		}
-	}
-	return
-}
-
-func MatchPlace(longitude, latitude float64) (v Place, err error) {
-	var (
-		p        []Place
-		min, dis float64 = 99999999, 0
-	)
-	fmt.Println(longitude)
-	fmt.Println(latitude)
-	o := orm.NewOrm()
-	_, err = o.QueryTable("place").All(&p)
-	if err != nil {
-		return
-	}
-	for _, i := range p {
-		dis = math.Abs(longitude-i.Longitude) + math.Abs(latitude-i.Latitude)
-		if min > dis {
-			min = dis
-			v = i
 		}
 	}
 	return

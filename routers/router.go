@@ -15,7 +15,12 @@ import (
 
 func init() {
 	ns := beego.NewNamespace("/v1",
-		beego.NSInclude(&controllers.PlaceController{}),
+		beego.NSNamespace("/place",
+			beego.NSInclude(&controllers.PlaceController{}),
+		),
+		beego.NSNamespace("/placetype",
+			beego.NSInclude(&controllers.PlaceTypeController{}),
+		),
 	)
 	beego.AddNamespace(ns)
 }

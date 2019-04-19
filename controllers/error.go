@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"fmt"
 	"github.com/astaxie/beego"
 )
 
@@ -10,8 +9,8 @@ type ErrorController struct {
 }
 
 func (c *ErrorController) Error404() {
-	c.Data["content"] = "page not found"
-	c.TplName = "404.tpl"
+	c.Ctx.WriteString("page not found")
+	c.Ctx.ResponseWriter.Status = 404
 }
 
 func (c *ErrorController) Error400() {
@@ -19,6 +18,5 @@ func (c *ErrorController) Error400() {
 }
 
 func (c *ErrorController) Error500() {
-	fmt.Println(c.Data["json"])
 	c.ServeJSON()
 }

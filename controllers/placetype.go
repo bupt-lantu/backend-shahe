@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/astaxie/beego"
+	"github.com/astaxie/beego/logs"
 	"github.com/astaxie/beego/validation"
 )
 
@@ -33,28 +34,43 @@ func (c *PlaceTypeController) URLMapping() {
 // @Failure 403 body is empty
 // @router / [post]
 func (c *PlaceTypeController) Post() {
-	var v models.PlaceType
-	valid := validation.Validation{}
-	err := json.Unmarshal(c.Ctx.Input.RequestBody, &v)
+	var (
+		v     models.PlaceType
+		b     bool
+		err   error
+		valid = validation.Validation{}
+	)
+
+	err = json.Unmarshal(c.Ctx.Input.RequestBody, &v)
 	if err != nil {
+		logs.Warning(err)
 		c.Data["json"] = err.Error()
-		c.Abort("400")
+		c.Ctx.ResponseWriter.WriteHeader(400)
+		goto END
 	}
-	b, err := valid.Valid(&v)
+	b, err = valid.Valid(&v)
 	if err != nil {
+		logs.Error(err)
 		c.Data["json"] = err.Error()
-		c.Abort("500")
+		c.Ctx.ResponseWriter.WriteHeader(500)
+		goto END
 	}
 	if !b {
+		logs.Warning(err)
 		c.Data["json"] = valid.Errors
-		c.Abort("400")
+		c.Ctx.ResponseWriter.WriteHeader(400)
+		goto END
 	}
-	if _, err := models.AddPlaceType(&v); err == nil {
+	if _, err = models.AddPlaceType(&v); err == nil {
 		c.Ctx.Output.SetStatus(201)
 		c.Data["json"] = v
 	} else {
+		logs.Error(err)
 		c.Data["json"] = err.Error()
+		c.Ctx.ResponseWriter.WriteHeader(500)
 	}
+
+END:
 	c.ServeJSON()
 }
 
@@ -66,14 +82,27 @@ func (c *PlaceTypeController) Post() {
 // @Failure 403 :id is empty
 // @router /:id [get]
 func (c *PlaceTypeController) GetOne() {
-	idStr := c.Ctx.Input.Param(":id")
-	id, _ := strconv.ParseInt(idStr, 0, 64)
-	v, err := models.GetPlaceTypeById(id)
+	var (
+		v       *models.PlaceType
+		idStr   = c.Ctx.Input.Param(":id")
+		id, err = strconv.ParseInt(idStr, 0, 64)
+	)
 	if err != nil {
+		logs.Warning(err)
 		c.Data["json"] = err.Error()
+		c.Ctx.ResponseWriter.WriteHeader(400)
+		goto END
+	}
+	v, err = models.GetPlaceTypeById(id)
+	if err != nil {
+		logs.Error(err)
+		c.Data["json"] = err.Error()
+		c.Ctx.ResponseWriter.WriteHeader(500)
+		goto END
 	} else {
 		c.Data["json"] = v
 	}
+END:
 	c.ServeJSON()
 }
 
@@ -133,7 +162,9 @@ func (c *PlaceTypeController) GetAll() {
 
 	l, err := models.GetAllPlaceType(query, fields, sortby, order, offset, limit)
 	if err != nil {
+		logs.Error(err)
 		c.Data["json"] = err.Error()
+		c.Ctx.ResponseWriter.WriteHeader(500)
 	} else {
 		c.Data["json"] = l
 	}
@@ -149,19 +180,48 @@ func (c *PlaceTypeController) GetAll() {
 // @Failure 403 :id is not int
 // @router /:id [put]
 func (c *PlaceTypeController) Put() {
-	idStr := c.Ctx.Input.Param(":id")
-	id, _ := strconv.ParseInt(idStr, 0, 64)
-	v := models.PlaceType{Id: id}
-	err := json.Unmarshal(c.Ctx.Input.RequestBody, &v)
+	var (
+		idStr = c.Ctx.Input.Param(":id")
+		id, _ = strconv.ParseInt(idStr, 0, 64)
+		v     = models.PlaceType{Id: id}
+		b     bool
+		err   error
+		valid = validation.Validation{}
+	)
+
+	err = json.Unmarshal(c.Ctx.Input.RequestBody, &v)
 	if err != nil {
+		logs.Warning(err)
 		c.Data["json"] = err.Error()
-		c.Abort("400")
+		c.Ctx.ResponseWriter.WriteHeader(400)
+		goto END
 	}
-	if err := models.UpdatePlaceTypeById(&v); err == nil {
+	b, err = valid.Valid(&v)
+	if err != nil {
+		logs.Error(err)
+		c.Data["json"] = err.Error()
+		c.Ctx.ResponseWriter.WriteHeader(500)
+		goto END
+	}
+	if !b {
+		logs.Warning(valid.Errors)
+		c.Data["json"] = valid.Errors
+		c.Ctx.ResponseWriter.WriteHeader(400)
+		goto END
+	}
+	if err != nil {
+		logs.Warning(err)
+		c.Data["json"] = err.Error()
+		c.Ctx.ResponseWriter.WriteHeader(400)
+	}
+	if err = models.UpdatePlaceTypeById(&v); err == nil {
 		c.Data["json"] = "OK"
 	} else {
+		logs.Error(err)
 		c.Data["json"] = err.Error()
+		c.Ctx.ResponseWriter.WriteHeader(500)
 	}
+END:
 	c.ServeJSON()
 }
 
@@ -178,7 +238,9 @@ func (c *PlaceTypeController) Delete() {
 	if err := models.DeletePlaceType(id); err == nil {
 		c.Data["json"] = "OK"
 	} else {
+		logs.Error(err)
 		c.Data["json"] = err.Error()
+		c.Ctx.ResponseWriter.WriteHeader(500)
 	}
 	c.ServeJSON()
 }

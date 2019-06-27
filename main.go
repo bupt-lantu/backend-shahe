@@ -2,7 +2,7 @@ package main
 
 import (
   "fmt"
-  _ "bupt_tour/routers"
+  _ "backend-shahe/routers"
 
   "github.com/astaxie/beego"
   "github.com/astaxie/beego/logs"

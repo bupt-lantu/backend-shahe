@@ -8,7 +8,7 @@
 package routers
 
 import (
-	"bupt_tour/controllers"
+	"backend-shahe/controllers"
 
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/context"

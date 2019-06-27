@@ -1,7 +1,7 @@
 package controllers
 
 import (
-	"bupt_tour/models"
+	"backend-shahe/models"
 	"encoding/json"
 	"errors"
 	"strconv"

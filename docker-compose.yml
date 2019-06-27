@@ -9,6 +9,10 @@ services:
       - POSTGRES_PASSWORD=123456
       - POSTGRES_DB=tour
       - LANG=C.UTF-8
+    volumes:
+      - ./postgresql.conf:/etc/postgresql-11/postgresql.conf
+    command: -c 'config-file=/etc/postgresql-11/postgresql.conf'
+
 
   service:
     image: "wzekin/bupt_tour"

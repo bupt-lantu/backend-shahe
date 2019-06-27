@@ -20,3 +20,7 @@ func (c *ErrorController) Error400() {
 func (c *ErrorController) Error500() {
 	c.ServeJSON()
 }
+
+func (c *ErrorController) Error403() {
+	c.ServeJSON()
+}

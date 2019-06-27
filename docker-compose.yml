@@ -11,7 +11,7 @@ services:
       - LANG=C.UTF-8
 
   service:
-    image: wzekin/bupt_tour
+    image: "wzekin/bupt_tour"
     depends_on:
       - db
     ports:
@@ -21,3 +21,9 @@ services:
     environment:
       - LANG=C.UTF-8
 
+  backend:
+    image: "wzekin/backend-shahe-guide"
+    depends_on:
+      - db
+    ports:
+      - "4200:80"

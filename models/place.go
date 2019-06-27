@@ -28,7 +28,6 @@ func init() {
 // AddPlace insert a new Place into database and returns
 // last inserted Id on success.
 func AddPlace(m *Place) (id int64, err error) {
-	fmt.Println(m)
 	o := orm.NewOrm()
 	id, err = o.Insert(m)
 	return
@@ -154,8 +153,6 @@ func MatchPlace(longitude, latitude float64) (v Place, err error) {
 		p        []Place
 		min, dis float64 = 99999999, 0
 	)
-	fmt.Println(longitude)
-	fmt.Println(latitude)
 	o := orm.NewOrm()
 	_, err = o.QueryTable("place").All(&p)
 	if err != nil {

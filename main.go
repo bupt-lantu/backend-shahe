@@ -1,30 +1,34 @@
 package main
 
 import (
-	_ "bupt_tour/routers"
+  "fmt"
+  _ "bupt_tour/routers"
 
-	"github.com/astaxie/beego"
-	"github.com/astaxie/beego/logs"
-	"github.com/astaxie/beego/orm"
-	_ "github.com/lib/pq"
+  "github.com/astaxie/beego"
+  "github.com/astaxie/beego/logs"
+  "github.com/astaxie/beego/orm"
+  _ "github.com/lib/pq"
 )
 
 func main() {
-	orm.RegisterDataBase("default", "postgres", beego.AppConfig.String("sqlconn"))
-	err := orm.RunSyncdb("default", false, true)
-	if err != nil {
-		panic(err)
-	}
+  orm.RegisterDataBase("default", "postgres", beego.AppConfig.String("sqlconn"))
+  err := orm.RunSyncdb("default", false, true)
+  if err != nil {
+    panic(err)
+  }
+  orm.Debug = true
+  orm.SetMaxOpenConns("default", 200)
+  orm.SetMaxIdleConns("default", 300)
 
-	//文档链接
-	beego.BConfig.WebConfig.DirectoryIndex = true
-	beego.BConfig.WebConfig.StaticDir["/swagger"] = "swagger"
+  fmt.Println(beego.BConfig.WebConfig.Session.SessionOn)
 
-	//log设置
-	logs.Reset()
-	logs.SetLevel(logs.LevelTrace)
-	logs.SetLogger(logs.AdapterConsole, `{"level":1,"color":true}`)
-	logs.SetLogger(logs.AdapterFile, `{"filename":"logs/tour.log"}`)
+  //文档链接
+  beego.BConfig.WebConfig.DirectoryIndex = true
+  beego.BConfig.WebConfig.StaticDir["/swagger"] = "swagger"
 
-	beego.Run()
+  //log设置
+  logs.Reset()
+  logs.SetLogger(logs.AdapterFile, `{"filename":"logs/tour.log"}`)
+
+  beego.Run()
 }

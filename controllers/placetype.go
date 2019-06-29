@@ -1,7 +1,7 @@
 package controllers
 
 import (
-	"backend-shahe/models"
+	"github.com/bupt-lantu/backend-shahe/models"
 	"encoding/json"
 	"errors"
 	"strconv"
